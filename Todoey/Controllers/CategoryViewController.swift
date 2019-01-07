@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController{
 
     let realm = try! Realm()
     
@@ -22,6 +23,10 @@ class CategoryViewController: UITableViewController {
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         loadCategories()
+        
+        tableView.separatorStyle = .none
+        
+        
     }
 
   
@@ -33,14 +38,25 @@ class CategoryViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No category added yet"
+        
+        
+        cell.backgroundColor =  UIColor(hexString: categoryArray?[indexPath.row].color ?? UIColor.randomFlat.hexValue())
         
         return cell
     }
     
+    /*
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! SwipeTableViewCell
+        cell.delegate = self
+        return cell
+    }
+    
+    */
 
     //MARK: - Data Manipulation Methods CRUD
     
@@ -64,6 +80,24 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
         
     }
+    //MARK: - Delete data from swipe:
+    override func updateModel(at indexPath: IndexPath) {
+        if let category = self.categoryArray?[indexPath.row] {
+            do{
+                try self.realm.write {
+                    self.realm.delete(category)
+                }
+                
+            }
+            catch{
+                print("Error saving context \(error)")
+            }
+        }
+        
+    }
+    
+    
+    
     //MARK: - TableView delegate methods
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let destinationVC = segue.destination as! ToDoListViewController
@@ -91,6 +125,7 @@ class CategoryViewController: UITableViewController {
             let newCategory = Category()
             
             newCategory.name = textField.text ?? "New Category"
+            newCategory.color = UIColor.randomFlat.hexValue()
             
             
             
